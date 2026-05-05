@@ -1,7 +1,7 @@
 import axiosInstance from "@/app/utils/axios";
 
 export type FumoType = {
-  Id: string;
+  FumoId: string;
   FumoName: string;
   FumoDescription: string;
   FumoPrice: string;

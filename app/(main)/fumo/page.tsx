@@ -21,7 +21,7 @@ export default function FumoList() {
   };
 
   const columns = [
-    { title: "Fumo ID", dataIndex: "fumoId", key: "fumoId" },
+    { title: "Fumo ID", dataIndex: "FumoId", key: "FumoId" },
     {
       title: "Fumo Name",
       dataIndex: "FumoName",
@@ -121,7 +121,7 @@ export default function FumoList() {
 
   // Mở modal Xóa
   const openDeleteModal = (fumo: FumoType) => {
-    setSelectedFumoId(fumo.Id)
+    setSelectedFumoId(fumo.FumoId)
     setDeleteModal(true);
   };
   // Đóng modal Xóa
