@@ -3,38 +3,73 @@
 import FumoService from "@/app/services/fumos/fumo.services"
 import { useState, useEffect } from "react"
 import { FumoType } from "@/app/services/fumos/fumo.services"
-import { Table, Image, Modal, Input, Button } from "antd"
+import { Table, Image, Modal, Input, Button, TableProps } from "antd"
 import { PlusOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined } from "@ant-design/icons"
 
 export default function FumoList() {
 
-  const columns = [
-    { title: "ID", dataIndex: "id", key: "id" },
-    { title: "Name", dataIndex: "name", key: "name" },
+  const columns: TableProps<FumoType>['columns'] = [
+    { 
+      title: "ID", 
+      dataIndex: "id", 
+      key: "id",
+      responsive: ['md'], 
+      width: 80,
+    },
+    { 
+      title: "Name", 
+      dataIndex: "name", 
+      key: "name", 
+      width: 120,
+      fixed: 'left', 
+    },
     {
       title: "Image",
       dataIndex: "image",
       key: "image",
+      width: 100,
       render: (url: string) => (
-        <div className="w-20 h-20 overflow-hidden rounded-md border border-gray-200">
-          <Image src={url} alt="fumo" />
+        <div className="w-16 h-16 md:w-20 md:h-20 overflow-hidden rounded-md border border-gray-200 bg-white shadow-sm">
+          <Image src={url} alt="fumo" className="object-contain h-full w-full" />
         </div>
       ),
     },
-    { title: "Description", dataIndex: "description", key: "description", ellipsis: true },
-    { title: "Price", dataIndex: "price", key: "price" },
+    { 
+      title: "Description", 
+      dataIndex: "description", 
+      key: "description", 
+      ellipsis: true,
+      responsive: ['lg'], 
+    },
+    { 
+      title: "Price", 
+      dataIndex: "price", 
+      key: "price", 
+      width: 100,
+      render: (p: string) => <span className="font-bold text-green-800">{p}</span>
+    },
     {
       title: "Action",
       key: "actions",
-      width: 200,
-      render: (_: unknown, item: FumoType) => (
-        <div className="flex gap-2">
-          <Button type="primary" ghost icon={<EditOutlined />} onClick={() => openUpdateModal(item)}>
-            Update
-          </Button>
-          <Button danger icon={<DeleteOutlined />} onClick={() => openDeleteModal(item)}>
-            Delete
-          </Button>
+      fixed: 'right', 
+      width: 110,
+      render: (_: any, item: FumoType) => (
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button 
+            type="primary" 
+            ghost 
+            size="small"
+            icon={<EditOutlined />} 
+            onClick={() => openUpdateModal(item)}
+            className="w-full sm:w-auto"
+          />
+          <Button 
+            danger 
+            size="small"
+            icon={<DeleteOutlined />} 
+            onClick={() => openDeleteModal(item)}
+            className="w-full sm:w-auto"
+          />
         </div>
       ),
     },
@@ -51,89 +86,53 @@ export default function FumoList() {
   const [price, setPrice] = useState("")
 
   const resetForm = () => {
-    setSelectedId("")
-    setName("")
-    setImage("")
-    setDescription("")
-    setPrice("")
-    setIsEditing(false)
+    setSelectedId(""); setName(""); setImage(""); setDescription(""); setPrice(""); setIsEditing(false)
   }
 
   const fetchFumoData = async () => {
-    const data = await FumoService.getAllFumos()
-    setFumoData(data)
+    try {
+      const data = await FumoService.getAllFumos()
+      setFumoData(data)
+    } catch (err) {
+      console.error("Fetch error:", err)
+    }
   }
 
   useEffect(() => { fetchFumoData() }, [])
 
-  // Mở modal thêm mới
   const openUpdateModal = (fumo: FumoType | null) => {
     if (fumo) {
-      // Chế độ sửa — điền sẵn data vào form
-      setIsEditing(true)
-      setSelectedId(fumo.id)
-      setName(fumo.name)
-      setImage(fumo.image)
-      setDescription(fumo.description)
-      setPrice(fumo.price)
-    } else {
-      // Chế độ thêm mới
-      resetForm()
-    }
+      setIsEditing(true); setSelectedId(fumo.id); setName(fumo.name); setImage(fumo.image); setDescription(fumo.description); setPrice(fumo.price)
+    } else { resetForm() }
     setModalUpdate(true)
   }
 
-  const closeUpdateModal = () => {
-    setModalUpdate(false)
-    resetForm()
-  }
+  const closeUpdateModal = () => { setModalUpdate(false); resetForm() }
+  const openDeleteModal = (fumo: FumoType) => { setSelectedId(fumo.id); setDeleteModal(true) }
+  const closeDeleteModal = () => { setDeleteModal(false); setSelectedId("") }
 
-  const openDeleteModal = (fumo: FumoType) => {
-    setSelectedId(fumo.id)
-    setDeleteModal(true)
-  }
-
-  const closeDeleteModal = () => {
-    setDeleteModal(false)
-    setSelectedId("")
-  }
-
-  // Xử lý thêm hoặc sửa
   const handleSubmit = async () => {
     const payload = { name, image, description, price }
     try {
-      if (isEditing) {
-        await FumoService.updateFumo(selectedId, payload)
-      } else {
-        await FumoService.addFumo(payload)
-      }
-      fetchFumoData()
-      closeUpdateModal()
-    } catch {
-      alert("Error!")
-    }
+      if (isEditing) { await FumoService.updateFumo(selectedId, payload) }
+      else { await FumoService.addFumo(payload) }
+      fetchFumoData(); closeUpdateModal()
+    } catch { alert("Error saving data!") }
   }
 
-  // Xử lý xóa
   const handleDelete = async () => {
-    try {
-      await FumoService.deleteFumo(selectedId)
-      fetchFumoData()
-      closeDeleteModal()
-    } catch {
-      alert("Fail to delete!")
-    }
+    try { await FumoService.deleteFumo(selectedId); fetchFumoData(); closeDeleteModal() }
+    catch { alert("Fail to delete!") }
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#D8CFBC', fontFamily: 'Courier New, monospace' }}>
-      <div className="max-w-7xl mx-auto p-6">
+    <div className="min-h-screen pb-10" style={{ backgroundColor: '#D8CFBC', fontFamily: 'Courier New, monospace' }}>
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-6">
 
-        {/* câu slogan */}
-        <div className="rounded-xl p-6 mb-6 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4 border"
+        {/* Slogan */}
+        <div className="rounded-xl p-4 md:p-6 mb-6 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 border"
           style={{ backgroundColor: '#E4DDD0', borderColor: '#B0A090' }}>
-          <p className="text-xl font-bold italic text-center sm:text-left"
-            style={{ color: '#3D2E20', fontFamily: 'Courier New, monospace' }}>
+          <p className="text-lg md:text-xl font-bold italic text-center md:text-left leading-tight text-[#3D2E20]">
             "Everyone should have at least one Fumo in their life."
           </p>
           <Button
@@ -141,13 +140,14 @@ export default function FumoList() {
             size="large"
             icon={<PlusOutlined />}
             onClick={() => openUpdateModal(null)}
-            style={{ backgroundColor: '#6B5E4E', borderColor: '#6B5E4E', fontFamily: 'Courier New, monospace', flexShrink: 0 }}
+            className="w-full md:w-auto"
+            style={{ backgroundColor: '#6B5E4E', borderColor: '#6B5E4E', flexShrink: 0 }}
           >
             Add Fumo
           </Button>
         </div>
 
-        {/* bảng fumo */}
+        {/* Bảng Danh Sách Fumo */}
         <div className="rounded-xl overflow-hidden border shadow-sm"
           style={{ backgroundColor: '#cac0ae', borderColor: '#B0A090' }}>
           <Table
@@ -155,62 +155,70 @@ export default function FumoList() {
             columns={columns}
             rowKey="id"
             pagination={{ pageSize: 5 }}
+            scroll={{ x: 700 }} 
             style={{ fontFamily: 'Courier New, monospace' }}
           />
         </div>
 
-        {/* Modal thêm/sửa */}
+        {/* Modal Thêm/Sửa */}
         <Modal
-          title={
-            <span style={{ fontFamily: 'Courier New, monospace', color: '#3D2E20' }}>
-              {isEditing ? 'Update Fumo' : 'Add Fumo'}
-            </span>
-          }
+          title={<span className="font-mono text-[#3D2E20]">{isEditing ? 'Update Fumo' : 'Add Fumo'}</span>}
           open={modalUpdate}
           onCancel={closeUpdateModal}
           onOk={handleSubmit}
           okText={isEditing ? 'Update' : 'Add'}
           cancelText="Cancel"
           centered
+          width={600}
           okButtonProps={{ style: { backgroundColor: '#6B5E4E', borderColor: '#6B5E4E' } }}
         >
           <hr className="my-4" style={{ borderColor: '#B0A090' }} />
-          <div className="space-y-4">
-            {[
-              { label: 'Name', placeholder: 'Input name...', value: name, onChange: setName, type: 'text' },
-              { label: 'Image Link', placeholder: 'URL image...', value: image, onChange: setImage, type: 'text' },
-              { label: 'Price', placeholder: 'E.g.: 150000', value: price, onChange: setPrice, type: 'number' },
-            ].map(f => (
-              <div key={f.label}>
-                <label className="block font-bold mb-1" style={{ fontFamily: 'Courier New', color: '#3D2E20' }}>
-                  {f.label}
-                </label>
-                <Input
-                  size="large"
-                  type={f.type}
-                  placeholder={f.placeholder}
-                  value={f.value}
-                  onChange={e => f.onChange(e.target.value)}
-                  style={{ borderColor: '#B0A090', fontFamily: 'Courier New' }}
-                />
-              </div>
-            ))}
+          <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-2">
             <div>
-              <label className="block font-bold mb-1" style={{ fontFamily: 'Courier New', color: '#3D2E20' }}>
-                Description
-              </label>
+              <label className="block font-bold mb-1 text-[#3D2E20]">Name</label>
+              <Input
+                size="large"
+                placeholder="Input name..."
+                value={name}
+                onChange={e => setName(e.target.value)}
+                style={{ borderColor: '#B0A090' }}
+              />
+            </div>
+            <div>
+              <label className="block font-bold mb-1 text-[#3D2E20]">Image Link (URL)</label>
+              <Input
+                size="large"
+                placeholder="https://..."
+                value={image}
+                onChange={e => setImage(e.target.value)}
+                style={{ borderColor: '#B0A090' }}
+              />
+            </div>
+            <div>
+              <label className="block font-bold mb-1 text-[#3D2E20]">Price</label>
+              <Input
+                size="large"
+                type="number"
+                placeholder="E.g.: 150000"
+                value={price}
+                onChange={e => setPrice(e.target.value)}
+                style={{ borderColor: '#B0A090' }}
+              />
+            </div>
+            <div>
+              <label className="block font-bold mb-1 text-[#3D2E20]">Description</label>
               <Input.TextArea
-                rows={3}
-                placeholder="Input description..."
+                rows={4}
+                placeholder="Tell us about this Fumo..."
                 value={description}
                 onChange={e => setDescription(e.target.value)}
-                style={{ borderColor: '#B0A090', fontFamily: 'Courier New' }}
+                style={{ borderColor: '#B0A090' }}
               />
             </div>
           </div>
         </Modal>
 
-        {/* Modal xóa */}
+        {/* Modal Xác Nhận Xóa */}
         <Modal
           open={deleteModal}
           onCancel={closeDeleteModal}
@@ -219,15 +227,12 @@ export default function FumoList() {
           okButtonProps={{ danger: true }}
           cancelText="Cancel"
           centered
+          width={400}
         >
-          <div className="text-center p-4" style={{ color: '#C0392B' }}>
-            <ExclamationCircleOutlined className="text-5xl mb-4" />
-            <h3 className="text-xl font-bold mb-2" style={{ fontFamily: 'Courier New' }}>
-              Confirm Delete?
-            </h3>
-            <p style={{ color: '#5C4A38', fontFamily: 'Courier New' }}>
-              This Fumo will be permanently deleted.
-            </p>
+          <div className="text-center p-4">
+            <ExclamationCircleOutlined className="text-5xl mb-4 text-[#C0392B]" />
+            <h3 className="text-xl font-bold mb-2 font-mono">Confirm Delete?</h3>
+            <p className="text-[#5C4A38] font-mono">This Fumo will be removed from your collection forever.</p>
           </div>
         </Modal>
 
