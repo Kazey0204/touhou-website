@@ -147,7 +147,7 @@ export default function FumoList() {
           </Button>
         </div>
 
-        {/* Table */}
+        {/* bảng fumo */}
         <div className="rounded-xl overflow-hidden border shadow-sm"
           style={{ backgroundColor: '#cac0ae', borderColor: '#B0A090' }}>
           <Table
