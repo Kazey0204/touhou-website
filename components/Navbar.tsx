@@ -28,7 +28,7 @@ export default function Navbar() {
       if (isPlaying) {
         audioRef.current.pause();
       } else {
-        audioRef.current.play().catch(err => console.log("Chờ tương tác người dùng để phát nhạc"));
+        audioRef.current.play().catch(err => console.log("Wait"));
       }
       setIsPlaying(!isPlaying);
     }
